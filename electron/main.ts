@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import path from 'node:path';
 import { AppDatabase } from './db/Database';
