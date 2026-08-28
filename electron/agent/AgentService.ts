@@ -20,13 +20,41 @@ interface ClaudeCliResult {
 
 const CLAUDE_CLI_COMMAND = process.env.CLAUDE_CLI_PATH || 'claude';
 
+const BASE_ALLOWED_TOOLS = ['Read', 'Glob', 'Grep', 'Edit', 'Write'];
+
+/**
+ * headlessモードには操作ごとの承認コールバックが無いため、Bashは無制限には許可せず、
+ * ビルド・テスト・バージョン管理でよく使う安全なコマンドの接頭辞のみを許可する。
+ * プロジェクト固有のビルドコマンド（UEのRunUAT、Unityのバッチビルド等）を追加したい場合は
+ * 環境変数 AGENT_EXTRA_BASH_RULES に "Bash(コマンド接頭辞 *)" 形式でカンマ区切り指定する。
+ */
+const DEFAULT_BASH_RULES = [
+  'Bash(npm run *)',
+  'Bash(npm test)',
+  'Bash(npm install)',
+  'Bash(npm ci)',
+  'Bash(yarn *)',
+  'Bash(pnpm *)',
+  'Bash(git status)',
+  'Bash(git status *)',
+  'Bash(git diff *)',
+  'Bash(git log *)',
+  'Bash(git add *)',
+  'Bash(git commit *)',
+];
+
+function buildAllowedToolsFlag(): string {
+  const extraRules = (process.env.AGENT_EXTRA_BASH_RULES ?? '')
+    .split(',')
+    .map((rule) => rule.trim())
+    .filter((rule) => rule.length > 0);
+  return [...BASE_ALLOWED_TOOLS, ...DEFAULT_BASH_RULES, ...extraRules].join(',');
+}
+
 /**
  * ユーザーがローカルで `claude login` 済みのClaude Code CLIをサブプロセスとして呼び出す。
  * Claude Pro/Maxプランのログインセッションをそのまま使うため、
  * Anthropic Console のAPIキー課金を発生させない。
- *
- * headlessモードのCLIには操作ごとの承認コールバック（canUseTool）が無いため、
- * 安全側に倒し、読み取り・ファイル編集のみを許可しBashコマンド実行は許可しない。
  */
 export class AgentService {
   run(params: AgentRunParams): Promise<AgentRunResult> {
@@ -43,7 +71,7 @@ export class AgentService {
           '--permission-mode',
           'acceptEdits',
           '--allowedTools',
-          'Read,Glob,Grep,Edit,Write',
+          buildAllowedToolsFlag(),
           '--append-system-prompt',
           systemPromptAppend,
         ],

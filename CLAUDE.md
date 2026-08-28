@@ -30,8 +30,9 @@ UE（Unreal Engine）、Unity、Visual Studio / Visual Studio Codeなどの開�
 - **データベース**: `node:sqlite`（Node.js組み込み。ネイティブビルド依存を避けるためbetter-sqlite3等は使用しない）
 - **AIエージェント**: ローカルの `claude` CLI をNode.js側からサブプロセスとして呼び出す
   （Claude Pro/Maxのログインセッションを利用し、Anthropic APIの従量課金を発生させないため。
-  headlessモードには操作ごとの承認コールバックが無いため、許可するツールは
-  読み取り・ファイル編集までとし、Bashコマンド実行は許可しない）
+  headlessモードには操作ごとの承認コールバックが無いため、Bashは無制限には許可せず、
+  npm/yarn/pnpm実行やgitの基本操作など安全なコマンド接頭辞のみをホワイトリスト許可する。
+  プロジェクト固有のビルドコマンドは環境変数 AGENT_EXTRA_BASH_RULES で追加する）
 
 ### エンジン/IDE画面統合の方針
 
