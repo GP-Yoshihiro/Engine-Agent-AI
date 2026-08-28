@@ -46,18 +46,6 @@ interface ChatApi {
   send: (projectId: number, content: string) => Promise<ChatMessage[]>;
 }
 
-export interface ToolApprovalRequest {
-  requestId: string;
-  toolName: string;
-  input: Record<string, unknown>;
-  description?: string;
-}
-
-interface AgentApi {
-  onApprovalRequest: (callback: (request: ToolApprovalRequest) => void) => () => void;
-  respondApproval: (requestId: string, approved: boolean) => Promise<void>;
-}
-
 declare global {
   interface Window {
     engineAgentApi: {
@@ -65,7 +53,6 @@ declare global {
       auth: AuthApi;
       projects: ProjectsApi;
       chat: ChatApi;
-      agent: AgentApi;
     };
   }
 }

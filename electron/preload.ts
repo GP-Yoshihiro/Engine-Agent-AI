@@ -1,12 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
-interface ToolApprovalRequest {
-  requestId: string;
-  toolName: string;
-  input: Record<string, unknown>;
-  description?: string;
-}
-
 /**
  * Renderer（React側）へ公開するAPIのブリッジ。
  * ウィンドウ管理の機能実装時に、ここへ安全なIPC呼び出しを追加していく。
@@ -31,15 +24,5 @@ contextBridge.exposeInMainWorld('engineAgentApi', {
     list: (projectId: number) => ipcRenderer.invoke('chat:list', { projectId }),
     send: (projectId: number, content: string) =>
       ipcRenderer.invoke('chat:send', { projectId, content }),
-  },
-  agent: {
-    onApprovalRequest: (callback: (request: ToolApprovalRequest) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, request: ToolApprovalRequest) =>
-        callback(request);
-      ipcRenderer.on('agent:approval-request', listener);
-      return () => ipcRenderer.removeListener('agent:approval-request', listener);
-    },
-    respondApproval: (requestId: string, approved: boolean) =>
-      ipcRenderer.invoke('agent:approval-response', { requestId, approved }),
   },
 });

@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
-import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { AppDatabase } from './db/Database';
 import { AuthError, AuthService } from './auth/AuthService';
@@ -12,7 +11,6 @@ import { AgentError, AgentService } from './agent/AgentService';
 const isDev = process.env.NODE_ENV === 'development';
 
 let mainWindow: BrowserWindow | null = null;
-const pendingToolApprovals = new Map<string, (approved: boolean) => void>();
 
 interface RegisterArgs {
   email: string;
@@ -42,11 +40,6 @@ interface ChatListArgs {
 interface ChatSendArgs {
   projectId: number;
   content: string;
-}
-
-interface ToolApprovalResponseArgs {
-  requestId: string;
-  approved: boolean;
 }
 
 function toDomainErrorMessage(error: unknown, fallbackMessage: string): Error {
@@ -123,27 +116,6 @@ function registerProjectHandlers(projectService: ProjectService, sessionStore: S
   });
 }
 
-/** canUseToolからのGUI承認要求を、対応するIPC応答が届くまで待機するPromiseに変換する。 */
-function requestToolApprovalFromRenderer(
-  toolName: string,
-  input: Record<string, unknown>,
-  description?: string,
-): Promise<boolean> {
-  if (!mainWindow) {
-    return Promise.resolve(false);
-  }
-  const requestId = randomUUID();
-  return new Promise<boolean>((resolve) => {
-    pendingToolApprovals.set(requestId, resolve);
-    mainWindow?.webContents.send('agent:approval-request', {
-      requestId,
-      toolName,
-      input,
-      description,
-    });
-  });
-}
-
 function registerChatHandlers(
   chatService: ChatService,
   projectService: ProjectService,
@@ -179,7 +151,6 @@ function registerChatHandlers(
           projectPath: project.projectPath,
           projectName: project.name,
           engineType: project.engineType,
-          requestToolApproval: requestToolApprovalFromRenderer,
         });
         const agentMessage = chatService.saveAgentMessage(args.projectId, responseText);
         return [userMessage, agentMessage];
@@ -193,14 +164,6 @@ function registerChatHandlers(
       }
     } catch (error) {
       throw toDomainErrorMessage(error, 'メッセージ送信中にエラーが発生しました。');
-    }
-  });
-
-  ipcMain.handle('agent:approval-response', (_event, args: ToolApprovalResponseArgs) => {
-    const resolve = pendingToolApprovals.get(args.requestId);
-    if (resolve) {
-      resolve(args.approved);
-      pendingToolApprovals.delete(args.requestId);
     }
   });
 }
