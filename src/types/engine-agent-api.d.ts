@@ -29,12 +29,28 @@ interface ProjectsApi {
   remove: (projectId: number) => Promise<void>;
 }
 
+export type ChatRole = 'user' | 'agent';
+
+export interface ChatMessage {
+  id: number;
+  projectId: number;
+  role: ChatRole;
+  content: string;
+  createdAt: string;
+}
+
+interface ChatApi {
+  list: (projectId: number) => Promise<ChatMessage[]>;
+  send: (projectId: number, content: string) => Promise<ChatMessage[]>;
+}
+
 declare global {
   interface Window {
     engineAgentApi: {
       appVersion: string;
       auth: AuthApi;
       projects: ProjectsApi;
+      chat: ChatApi;
     };
   }
 }

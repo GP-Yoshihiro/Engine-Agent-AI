@@ -55,7 +55,7 @@ function App() {
         title={`${selectedProject.name}（${ENGINE_TYPE_LABELS[selectedProject.engineType]}）`}
       />
       <div className="app-shell__body">
-        <AppLayout />
+        <AppLayout projectId={selectedProject.id} />
       </div>
     </div>
   );
