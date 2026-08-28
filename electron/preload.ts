@@ -12,5 +12,12 @@ contextBridge.exposeInMainWorld('engineAgentApi', {
       ipcRenderer.invoke('auth:register', { email, password, displayName }),
     login: (email: string, password: string) =>
       ipcRenderer.invoke('auth:login', { email, password }),
+    logout: () => ipcRenderer.invoke('auth:logout'),
+  },
+  projects: {
+    list: () => ipcRenderer.invoke('project:list'),
+    create: (name: string, engineType: string) =>
+      ipcRenderer.invoke('project:create', { name, engineType }),
+    remove: (projectId: number) => ipcRenderer.invoke('project:delete', { projectId }),
   },
 });

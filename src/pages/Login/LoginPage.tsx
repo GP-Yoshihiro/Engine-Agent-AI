@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import type { AuthenticatedUser } from '../../types/engine-agent-api';
+import { toDisplayErrorMessage } from '../../utils/errorMessage';
 import '../../components/AuthForm/AuthForm.css';
 
 interface LoginPageProps {
@@ -21,7 +22,7 @@ function LoginPage({ onLoginSuccess, onNavigateToSignup }: LoginPageProps) {
       const user = await window.engineAgentApi.auth.login(email, password);
       onLoginSuccess(user);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'ログインに失敗しました。');
+      setErrorMessage(toDisplayErrorMessage(error, 'ログインに失敗しました。'));
     } finally {
       setIsSubmitting(false);
     }

@@ -13,6 +13,7 @@ export class AppDatabase {
   constructor(databaseFilePath: string) {
     fs.mkdirSync(path.dirname(databaseFilePath), { recursive: true });
     this.connection = new DatabaseSync(databaseFilePath);
+    this.connection.exec('PRAGMA foreign_keys = ON;');
     this.connection.exec(SCHEMA_SQL);
   }
 

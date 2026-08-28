@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import type { AuthenticatedUser } from '../../types/engine-agent-api';
+import { toDisplayErrorMessage } from '../../utils/errorMessage';
 import '../../components/AuthForm/AuthForm.css';
 
 interface SignupPageProps {
@@ -29,7 +30,7 @@ function SignupPage({ onSignupSuccess, onNavigateToLogin }: SignupPageProps) {
       const user = await window.engineAgentApi.auth.register(email, password, displayName);
       onSignupSuccess(user);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'アカウント作成に失敗しました。');
+      setErrorMessage(toDisplayErrorMessage(error, 'アカウント作成に失敗しました。'));
     } finally {
       setIsSubmitting(false);
     }
