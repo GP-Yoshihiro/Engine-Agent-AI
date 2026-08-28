@@ -1,0 +1,80 @@
+.project-dashboard {
+  max-width: 640px;
+  margin: 5vh auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.project-dashboard__create {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-end;
+  border: 1px solid var(--panel-border-color, #333);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.project-dashboard__create label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+}
+
+.project-dashboard__create input,
+.project-dashboard__create select {
+  padding: 8px;
+  font-size: 1rem;
+}
+
+.project-dashboard__error {
+  color: #d33;
+  margin: 0;
+}
+
+.project-dashboard__count {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.project-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.project-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--panel-border-color, #333);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.project-list__open {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+
+.project-list__engine {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
