@@ -5,7 +5,6 @@
 function EditorPanel() {
   return (
     <div>
-      <h2>コードエディタ</h2>
       <p>Visual Studio / Visual Studio Code の画面がここに表示されます。</p>
     </div>
   );
