@@ -44,6 +44,17 @@ function isEngineType(value: string): value is EngineType {
 export class ProjectService {
   constructor(private readonly db: AppDatabase) {}
 
+  /** 指定ユーザーが所有するプロジェクトのみを返す。他ユーザーのプロジェクトIDを渡した場合は例外を投げる。 */
+  get(userId: number, projectId: number): Project {
+    const row = this.db.raw
+      .prepare('SELECT * FROM projects WHERE id = ? AND user_id = ?')
+      .get(projectId, userId) as unknown as ProjectRow | undefined;
+    if (!row) {
+      throw new ProjectError('プロジェクトが見つかりません。');
+    }
+    return toProject(row);
+  }
+
   list(userId: number): Project[] {
     const rows = this.db.raw
       .prepare('SELECT * FROM projects WHERE user_id = ? ORDER BY updated_at DESC')

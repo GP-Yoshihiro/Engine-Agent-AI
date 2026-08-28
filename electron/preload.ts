@@ -20,4 +20,9 @@ contextBridge.exposeInMainWorld('engineAgentApi', {
       ipcRenderer.invoke('project:create', { name, engineType }),
     remove: (projectId: number) => ipcRenderer.invoke('project:delete', { projectId }),
   },
+  chat: {
+    list: (projectId: number) => ipcRenderer.invoke('chat:list', { projectId }),
+    send: (projectId: number, content: string) =>
+      ipcRenderer.invoke('chat:send', { projectId, content }),
+  },
 });

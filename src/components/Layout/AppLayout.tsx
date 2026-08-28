@@ -13,11 +13,16 @@ const DEFAULT_WIDTHS: Record<PanelId, number> = {
 };
 const MIN_PANEL_WIDTH = 220;
 
-const PANEL_COMPONENTS: Record<PanelId, () => JSX.Element> = {
-  chat: ChatPanel,
-  engine: EnginePanel,
-  editor: EditorPanel,
-};
+function renderPanelContent(panelId: PanelId, projectId: number): JSX.Element {
+  switch (panelId) {
+    case 'chat':
+      return <ChatPanel projectId={projectId} />;
+    case 'engine':
+      return <EnginePanel />;
+    case 'editor':
+      return <EditorPanel />;
+  }
+}
 
 interface DragState {
   leftPanel: PanelId;
@@ -32,7 +37,11 @@ interface DragState {
  * 3パネル（チャット/エンジン/エディタ）のレイアウト。
  * 各パネルはドラッグでサイズ変更、◀▶ボタンで並び替えができる（ウィンドウとしては独立させない）。
  */
-function AppLayout() {
+interface AppLayoutProps {
+  projectId: number;
+}
+
+function AppLayout({ projectId }: AppLayoutProps) {
   const [order, setOrder] = useState<PanelId[]>(DEFAULT_ORDER);
   const [widths, setWidths] = useState<Record<PanelId, number>>(DEFAULT_WIDTHS);
   const dragState = useRef<DragState | null>(null);
@@ -95,7 +104,6 @@ function AppLayout() {
   return (
     <div className="app-layout">
       {order.map((panelId, index) => {
-        const PanelComponent = PANEL_COMPONENTS[panelId];
         const isLast = index === order.length - 1;
         const nextPanelId = isLast ? null : order[index + 1];
         const nextIsLast = nextPanelId !== null && index + 1 === order.length - 1;
@@ -128,7 +136,7 @@ function AppLayout() {
                 </div>
               </div>
               <div className="app-layout__panel-body">
-                <PanelComponent />
+                {renderPanelContent(panelId, projectId)}
               </div>
             </section>
             {!isLast && (
