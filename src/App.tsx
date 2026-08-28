@@ -5,6 +5,7 @@ import SignupPage from './pages/Signup/SignupPage';
 import ProjectDashboardPage from './pages/ProjectDashboard/ProjectDashboardPage';
 import AppLayout from './components/Layout/AppLayout';
 import AppHeader from './components/Header/AppHeader';
+import WorkHistoryModal from './components/WorkHistory/WorkHistoryModal';
 import { ENGINE_TYPE_LABELS } from './constants/engineTypes';
 import './App.css';
 
@@ -14,6 +15,7 @@ function App() {
   const [currentUser, setCurrentUser] = useState<AuthenticatedUser | null>(null);
   const [authView, setAuthView] = useState<AuthView>('login');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [isWorkHistoryOpen, setIsWorkHistoryOpen] = useState(false);
 
   const handleLogout = async () => {
     await window.engineAgentApi.auth.logout();
@@ -52,11 +54,18 @@ function App() {
         user={currentUser}
         onLogout={handleLogout}
         onBack={() => setSelectedProject(null)}
+        onShowWorkHistory={() => setIsWorkHistoryOpen(true)}
         title={`${selectedProject.name}（${ENGINE_TYPE_LABELS[selectedProject.engineType]}）`}
       />
       <div className="app-shell__body">
         <AppLayout projectId={selectedProject.id} />
       </div>
+      {isWorkHistoryOpen && (
+        <WorkHistoryModal
+          projectId={selectedProject.id}
+          onClose={() => setIsWorkHistoryOpen(false)}
+        />
+      )}
     </div>
   );
 }

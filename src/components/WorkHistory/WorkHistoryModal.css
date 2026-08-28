@@ -1,0 +1,62 @@
+.work-history-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.work-history-modal {
+  background: var(--dialog-bg, #fff);
+  color: var(--dialog-fg, #111);
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 640px;
+  width: 90%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.work-history-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.work-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.work-history-list__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-bottom: 1px solid var(--panel-border-color, #333);
+  padding-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.work-history-list__tool {
+  font-weight: 600;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.work-history-list__summary {
+  word-break: break-all;
+}
+
+.work-history-list__time {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}

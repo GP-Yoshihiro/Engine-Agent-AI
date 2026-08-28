@@ -5,7 +5,12 @@ import './index.css';
 
 const rootElement = document.getElementById('root') as HTMLElement;
 
-if (!window.engineAgentApi?.auth || !window.engineAgentApi?.projects || !window.engineAgentApi?.chat) {
+if (
+  !window.engineAgentApi?.auth ||
+  !window.engineAgentApi?.projects ||
+  !window.engineAgentApi?.chat ||
+  !window.engineAgentApi?.workHistory
+) {
   ReactDOM.createRoot(rootElement).render(
     <div style={{ padding: 32 }}>
       <h1>アプリの初期化に失敗しました</h1>

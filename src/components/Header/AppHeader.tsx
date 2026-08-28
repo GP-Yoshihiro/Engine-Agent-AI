@@ -6,9 +6,10 @@ interface AppHeaderProps {
   onLogout: () => void;
   title?: string;
   onBack?: () => void;
+  onShowWorkHistory?: () => void;
 }
 
-function AppHeader({ user, onLogout, title, onBack }: AppHeaderProps) {
+function AppHeader({ user, onLogout, title, onBack, onShowWorkHistory }: AppHeaderProps) {
   return (
     <header className="app-header">
       <div className="app-header__left">
@@ -20,9 +21,16 @@ function AppHeader({ user, onLogout, title, onBack }: AppHeaderProps) {
         <span>ようこそ、{user.displayName} さん</span>
         {title && <span className="app-header__title">{title}</span>}
       </div>
-      <button type="button" onClick={onLogout}>
-        ログアウト
-      </button>
+      <div className="app-header__right">
+        {onShowWorkHistory && (
+          <button type="button" onClick={onShowWorkHistory}>
+            作業履歴
+          </button>
+        )}
+        <button type="button" onClick={onLogout}>
+          ログアウト
+        </button>
+      </div>
     </header>
   );
 }
