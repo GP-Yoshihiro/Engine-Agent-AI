@@ -7,9 +7,10 @@
   "license": "UNLICENSED",
   "main": "dist-electron/main.js",
   "engines": {
-    "node": ">=18"
+    "node": ">=22.12.0"
   },
   "scripts": {
+    "postinstall": "node node_modules/electron/install.js",
     "dev": "vite",
     "build:renderer": "vite build",
     "build:electron": "tsc -p electron/tsconfig.json",
@@ -32,7 +33,7 @@
     "@vitejs/plugin-react": "^4.3.1",
     "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
-    "electron": "^31.4.0",
+    "electron": "^44.0.0",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.2",
     "typescript": "^5.5.4",
@@ -40,7 +41,6 @@
     "wait-on": "^7.2.0"
   },
   "allowScripts": {
-    "electron@31.7.7": true,
     "esbuild@0.21.5": true,
     "fsevents@2.3.3": true
   }
