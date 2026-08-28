@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS projects (
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   engine_type TEXT NOT NULL,
+  project_path TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

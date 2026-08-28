@@ -13,6 +13,7 @@ function ProjectDashboardPage({ onSelectProject }: ProjectDashboardPageProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectEngine, setNewProjectEngine] = useState<EngineType>(ENGINE_TYPES[0]);
+  const [newProjectPath, setNewProjectPath] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -25,13 +26,21 @@ function ProjectDashboardPage({ onSelectProject }: ProjectDashboardPageProps) {
     loadProjects();
   }, []);
 
+  const handleSelectFolder = async () => {
+    const selectedPath = await window.engineAgentApi.projects.selectFolder();
+    if (selectedPath) {
+      setNewProjectPath(selectedPath);
+    }
+  };
+
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setErrorMessage(null);
     setIsCreating(true);
     try {
-      await window.engineAgentApi.projects.create(newProjectName, newProjectEngine);
+      await window.engineAgentApi.projects.create(newProjectName, newProjectEngine, newProjectPath);
       setNewProjectName('');
+      setNewProjectPath('');
       await loadProjects();
     } catch (error) {
       setErrorMessage(toDisplayErrorMessage(error, 'プロジェクト作成に失敗しました。'));
@@ -84,7 +93,14 @@ function ProjectDashboardPage({ onSelectProject }: ProjectDashboardPageProps) {
             ))}
           </select>
         </label>
-        <button type="submit" disabled={isCreating || isLimitReached}>
+        <label>
+          プロジェクトフォルダ
+          <input type="text" value={newProjectPath} readOnly required placeholder="未選択" />
+        </label>
+        <button type="button" onClick={handleSelectFolder} disabled={isLimitReached}>
+          フォルダを選択
+        </button>
+        <button type="submit" disabled={isCreating || isLimitReached || !newProjectPath}>
           {isCreating ? '作成中...' : '新規プロジェクト作成'}
         </button>
       </form>
@@ -106,6 +122,9 @@ function ProjectDashboardPage({ onSelectProject }: ProjectDashboardPageProps) {
             >
               <span>{project.name}</span>
               <span className="project-list__engine">{ENGINE_TYPE_LABELS[project.engineType]}</span>
+              {project.projectPath && (
+                <span className="project-list__path">{project.projectPath}</span>
+              )}
             </button>
             <button type="button" onClick={() => handleDelete(project.id)}>
               削除

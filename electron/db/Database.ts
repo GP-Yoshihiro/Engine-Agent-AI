@@ -15,6 +15,7 @@ export class AppDatabase {
     this.connection = new DatabaseSync(databaseFilePath);
     this.connection.exec('PRAGMA foreign_keys = ON;');
     this.connection.exec(SCHEMA_SQL);
+    this.runAdditiveMigrations();
   }
 
   get raw(): DatabaseSync {
@@ -23,5 +24,23 @@ export class AppDatabase {
 
   close(): void {
     this.connection.close();
+  }
+
+  /**
+   * CREATE TABLE IF NOT EXISTS では既存テーブルへのカラム追加が反映されないため、
+   * 既存DBに対する追加カラムのマイグレーションをここで個別に行う。
+   */
+  private runAdditiveMigrations(): void {
+    this.addColumnIfMissing('projects', 'project_path', 'TEXT');
+  }
+
+  private addColumnIfMissing(table: string, column: string, definition: string): void {
+    const columns = this.connection.prepare(`PRAGMA table_info(${table})`).all() as unknown as {
+      name: string;
+    }[];
+    const exists = columns.some((c) => c.name === column);
+    if (!exists) {
+      this.connection.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+    }
   }
 }

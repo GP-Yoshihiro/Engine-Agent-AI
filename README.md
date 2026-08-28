@@ -10,17 +10,18 @@ UE（Unreal Engine）、Unity、Visual Studio / Visual Studio Codeなどの開�
 - Electron（デスクトップアプリ基盤）
 - React + TypeScript + Vite（画面）
 - Node.js + TypeScript（Electron Main Process側のロジック）
-- SQLite（ローカル永続化。次フェーズで実装）
-- Claude Agent SDK / Claude Code CLI（AIエージェント連携。次フェーズで実装）
+- `node:sqlite`（ローカル永続化。ネイティブビルド依存を避けるためNode.js組み込みモジュールを使用）
+- Claude Agent SDK（`@anthropic-ai/claude-agent-sdk`）によるAIエージェント連携
 
 ## 現在の状態
 
-現在は基盤整備フェーズ。以下は雛形（フォルダ構成・設定ファイル）のみで、
-アカウント管理・DB・AIエージェント連携・ウィンドウ追従表示などの機能実装は未着手。
-
-- 3パネル（チャット / エンジン / エディタ）のレイアウト骨組み
-- Electronの起動エントリポイント
-- 各機能層（`electron/db`, `electron/auth`, `electron/agent`, `electron/window-manager`）のディレクトリと責務定義
+- ログイン / 新規登録、アカウントごとのデータ分離
+- プロジェクト管理（作成・一覧・削除、1アカウント最大20件、プロジェクトフォルダの選択）
+- 3パネル（チャット / エンジン / エディタ）のレイアウト（サイズ変更・並び替え対応）
+- チャット履歴の永続化とAIエージェント連携
+  （プロジェクトフォルダに対してファイル読み書き・Bash実行が可能。書き込み系操作は
+  実行前に必ずGUI上で許可を求める）
+- 未実装: エンジン/IDEウィンドウの追従配置（`electron/window-manager`）、作業履歴（実行ログ）の記録
 
 ## セットアップ
 

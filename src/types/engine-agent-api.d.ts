@@ -13,6 +13,7 @@ export interface Project {
   userId: number;
   name: string;
   engineType: EngineType;
+  projectPath: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -25,8 +26,9 @@ interface AuthApi {
 
 interface ProjectsApi {
   list: () => Promise<Project[]>;
-  create: (name: string, engineType: EngineType) => Promise<Project>;
+  create: (name: string, engineType: EngineType, projectPath: string) => Promise<Project>;
   remove: (projectId: number) => Promise<void>;
+  selectFolder: () => Promise<string | null>;
 }
 
 export type ChatRole = 'user' | 'agent';
@@ -44,6 +46,18 @@ interface ChatApi {
   send: (projectId: number, content: string) => Promise<ChatMessage[]>;
 }
 
+export interface ToolApprovalRequest {
+  requestId: string;
+  toolName: string;
+  input: Record<string, unknown>;
+  description?: string;
+}
+
+interface AgentApi {
+  onApprovalRequest: (callback: (request: ToolApprovalRequest) => void) => () => void;
+  respondApproval: (requestId: string, approved: boolean) => Promise<void>;
+}
+
 declare global {
   interface Window {
     engineAgentApi: {
@@ -51,6 +65,7 @@ declare global {
       auth: AuthApi;
       projects: ProjectsApi;
       chat: ChatApi;
+      agent: AgentApi;
     };
   }
 }

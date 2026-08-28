@@ -5,6 +5,7 @@ import SignupPage from './pages/Signup/SignupPage';
 import ProjectDashboardPage from './pages/ProjectDashboard/ProjectDashboardPage';
 import AppLayout from './components/Layout/AppLayout';
 import AppHeader from './components/Header/AppHeader';
+import ToolApprovalDialog from './components/ToolApprovalDialog/ToolApprovalDialog';
 import { ENGINE_TYPE_LABELS } from './constants/engineTypes';
 import './App.css';
 
@@ -38,6 +39,7 @@ function App() {
   if (!selectedProject) {
     return (
       <div className="app-shell">
+        <ToolApprovalDialog />
         <AppHeader user={currentUser} onLogout={handleLogout} />
         <div className="app-shell__body">
           <ProjectDashboardPage onSelectProject={setSelectedProject} />
@@ -48,6 +50,7 @@ function App() {
 
   return (
     <div className="app-shell">
+      <ToolApprovalDialog />
       <AppHeader
         user={currentUser}
         onLogout={handleLogout}
