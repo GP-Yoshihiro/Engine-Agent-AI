@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import type { Project } from '../../types/engine-agent-api';
 import { ENGINE_TYPES, ENGINE_TYPE_LABELS, type EngineType } from '../../constants/engineTypes';
 import { MAX_PROJECTS_PER_USER } from '../../constants/limits';
+import { toDisplayErrorMessage } from '../../utils/errorMessage';
 import './ProjectDashboard.css';
 
 interface ProjectDashboardPageProps {
@@ -33,7 +34,7 @@ function ProjectDashboardPage({ onSelectProject }: ProjectDashboardPageProps) {
       setNewProjectName('');
       await loadProjects();
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'プロジェクト作成に失敗しました。');
+      setErrorMessage(toDisplayErrorMessage(error, 'プロジェクト作成に失敗しました。'));
     } finally {
       setIsCreating(false);
     }
@@ -45,7 +46,7 @@ function ProjectDashboardPage({ onSelectProject }: ProjectDashboardPageProps) {
       await window.engineAgentApi.projects.remove(projectId);
       await loadProjects();
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'プロジェクト削除に失敗しました。');
+      setErrorMessage(toDisplayErrorMessage(error, 'プロジェクト削除に失敗しました。'));
     }
   };
 
