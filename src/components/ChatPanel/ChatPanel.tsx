@@ -5,7 +5,6 @@
 function ChatPanel() {
   return (
     <div>
-      <h2>チャット</h2>
       <p>エージェントとの対話はここに表示されます。</p>
     </div>
   );

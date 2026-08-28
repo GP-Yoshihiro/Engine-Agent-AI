@@ -5,7 +5,6 @@
 function EnginePanel() {
   return (
     <div>
-      <h2>エンジン画面</h2>
       <p>UE / Unity のエディタウィンドウがここに表示されます。</p>
     </div>
   );
