@@ -23,8 +23,9 @@ UE（Unreal Engine）、Unity、Visual Studio / Visual Studio Codeなどの開�
   （プロジェクトフォルダに対してファイルの読み取り・編集に加え、
   npm/yarn/pnpmの実行やgitの基本操作など安全なビルド関連コマンドを許可。
   プロジェクト固有のビルドコマンドは `AGENT_EXTRA_BASH_RULES` で追加できる）
-- 未実装: エンジン/IDEウィンドウの追従配置（`electron/window-manager`）、
-  作業履歴（実行ログ）の記録
+- 作業履歴の記録（AIエージェントが行ったファイル編集・コマンド実行等を記録し、
+  ヘッダーの「作業履歴」ボタンから一覧表示できる）
+- 未実装: エンジン/IDEウィンドウの追従配置（`electron/window-manager`）
 
 ## AIエージェントの利用要件
 

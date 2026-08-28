@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import path from 'node:path';
 import { AppDatabase } from './db/Database';
@@ -7,6 +6,7 @@ import { SessionStore } from './auth/SessionStore';
 import { ProjectError, ProjectService } from './projects/ProjectService';
 import { ChatError, ChatService } from './chat/ChatService';
 import { AgentError, AgentService } from './agent/AgentService';
+import { WorkHistoryService } from './work-history/WorkHistoryService';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -40,6 +40,10 @@ interface ChatListArgs {
 interface ChatSendArgs {
   projectId: number;
   content: string;
+}
+
+interface WorkHistoryListArgs {
+  projectId: number;
 }
 
 function toDomainErrorMessage(error: unknown, fallbackMessage: string): Error {
@@ -120,6 +124,7 @@ function registerChatHandlers(
   chatService: ChatService,
   projectService: ProjectService,
   agentService: AgentService,
+  workHistoryService: WorkHistoryService,
   sessionStore: SessionStore,
 ): void {
   ipcMain.handle('chat:list', (_event, args: ChatListArgs) => {
@@ -146,12 +151,15 @@ function registerChatHandlers(
       }
 
       try {
-        const { responseText } = await agentService.run({
+        const { responseText, actions } = await agentService.run({
           prompt: args.content,
           projectPath: project.projectPath,
           projectName: project.name,
           engineType: project.engineType,
         });
+        for (const action of actions) {
+          workHistoryService.record(args.projectId, action.toolName, action.summary);
+        }
         const agentMessage = chatService.saveAgentMessage(args.projectId, responseText);
         return [userMessage, agentMessage];
       } catch (agentRunError) {
@@ -164,6 +172,20 @@ function registerChatHandlers(
       }
     } catch (error) {
       throw toDomainErrorMessage(error, 'メッセージ送信中にエラーが発生しました。');
+    }
+  });
+}
+
+function registerWorkHistoryHandlers(
+  workHistoryService: WorkHistoryService,
+  sessionStore: SessionStore,
+): void {
+  ipcMain.handle('work-history:list', (_event, args: WorkHistoryListArgs) => {
+    const user = sessionStore.requireCurrentUser();
+    try {
+      return workHistoryService.list(user.id, args.projectId);
+    } catch (error) {
+      throw toDomainErrorMessage(error, '作業履歴の取得中にエラーが発生しました。');
     }
   });
 }
@@ -194,10 +216,12 @@ app.whenReady().then(() => {
   const projectService = new ProjectService(database);
   const chatService = new ChatService(database, projectService);
   const agentService = new AgentService();
+  const workHistoryService = new WorkHistoryService(database, projectService);
 
   registerAuthHandlers(authService, sessionStore);
   registerProjectHandlers(projectService, sessionStore);
-  registerChatHandlers(chatService, projectService, agentService, sessionStore);
+  registerChatHandlers(chatService, projectService, agentService, workHistoryService, sessionStore);
+  registerWorkHistoryHandlers(workHistoryService, sessionStore);
 
   createMainWindow();
 

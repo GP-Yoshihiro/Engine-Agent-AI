@@ -2,8 +2,14 @@ import { spawn } from 'node:child_process';
 
 export class AgentError extends Error {}
 
+export interface AgentAction {
+  toolName: string;
+  summary: string;
+}
+
 export interface AgentRunResult {
   responseText: string;
+  actions: AgentAction[];
 }
 
 export interface AgentRunParams {
@@ -13,7 +19,11 @@ export interface AgentRunParams {
   engineType: string;
 }
 
-interface ClaudeCliResult {
+interface StreamJsonLine {
+  type?: string;
+  message?: {
+    content?: Array<{ type?: string; name?: string; input?: Record<string, unknown> }>;
+  };
   result?: unknown;
   is_error?: boolean;
 }
@@ -51,10 +61,30 @@ function buildAllowedToolsFlag(): string {
   return [...BASE_ALLOWED_TOOLS, ...DEFAULT_BASH_RULES, ...extraRules].join(',');
 }
 
+function summarizeToolUse(name: string, input: Record<string, unknown>): string {
+  switch (name) {
+    case 'Read':
+      return `ファイルを読み取り: ${input.file_path ?? ''}`;
+    case 'Write':
+      return `ファイルを作成/上書き: ${input.file_path ?? ''}`;
+    case 'Edit':
+      return `ファイルを編集: ${input.file_path ?? ''}`;
+    case 'Bash':
+      return `コマンド実行: ${input.command ?? ''}`;
+    case 'Glob':
+      return `ファイル検索: ${input.pattern ?? ''}`;
+    case 'Grep':
+      return `テキスト検索: ${input.pattern ?? ''}`;
+    default:
+      return `${name} を実行`;
+  }
+}
+
 /**
  * ユーザーがローカルで `claude login` 済みのClaude Code CLIをサブプロセスとして呼び出す。
  * Claude Pro/Maxプランのログインセッションをそのまま使うため、
  * Anthropic Console のAPIキー課金を発生させない。
+ * stream-json形式でツール呼び出しを逐次受け取り、作業履歴として記録できるようにする。
  */
 export class AgentService {
   run(params: AgentRunParams): Promise<AgentRunResult> {
@@ -67,7 +97,8 @@ export class AgentService {
           '-p',
           params.prompt,
           '--output-format',
-          'json',
+          'stream-json',
+          '--verbose',
           '--permission-mode',
           'acceptEdits',
           '--allowedTools',
@@ -78,11 +109,50 @@ export class AgentService {
         { cwd: params.projectPath },
       );
 
-      let stdout = '';
+      let buffer = '';
       let stderr = '';
+      let responseText: string | null = null;
+      const actions: AgentAction[] = [];
+
+      const processLine = (line: string): void => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          return;
+        }
+
+        let parsed: StreamJsonLine;
+        try {
+          parsed = JSON.parse(trimmed) as StreamJsonLine;
+        } catch {
+          return;
+        }
+
+        if (parsed.type === 'assistant' && Array.isArray(parsed.message?.content)) {
+          for (const block of parsed.message.content) {
+            if (block.type === 'tool_use' && typeof block.name === 'string') {
+              actions.push({
+                toolName: block.name,
+                summary: summarizeToolUse(block.name, block.input ?? {}),
+              });
+            }
+          }
+          return;
+        }
+
+        if (parsed.type === 'result' && typeof parsed.result === 'string' && parsed.result.length > 0) {
+          responseText = parsed.is_error
+            ? `AIエージェントでエラーが発生しました: ${parsed.result}`
+            : parsed.result;
+        }
+      };
 
       child.stdout.on('data', (chunk: Buffer) => {
-        stdout += chunk.toString();
+        buffer += chunk.toString();
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+        for (const line of lines) {
+          processLine(line);
+        }
       });
       child.stderr.on('data', (chunk: Buffer) => {
         stderr += chunk.toString();
@@ -101,17 +171,13 @@ export class AgentService {
       });
 
       child.on('close', (exitCode: number | null) => {
-        try {
-          const parsed = JSON.parse(stdout) as ClaudeCliResult;
-          if (typeof parsed.result === 'string' && parsed.result.length > 0) {
-            const responseText = parsed.is_error
-              ? `AIエージェントでエラーが発生しました: ${parsed.result}`
-              : parsed.result;
-            resolve({ responseText });
-            return;
-          }
-        } catch {
-          // JSONとして解釈できなかった場合は下のエラー処理に進む
+        if (buffer.trim()) {
+          processLine(buffer);
+        }
+
+        if (responseText !== null) {
+          resolve({ responseText, actions });
+          return;
         }
 
         reject(

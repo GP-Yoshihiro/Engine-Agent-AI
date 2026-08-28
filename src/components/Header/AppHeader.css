@@ -18,3 +18,9 @@
   opacity: 0.8;
   font-size: 0.9rem;
 }
+
+.app-header__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

@@ -25,4 +25,7 @@ contextBridge.exposeInMainWorld('engineAgentApi', {
     send: (projectId: number, content: string) =>
       ipcRenderer.invoke('chat:send', { projectId, content }),
   },
+  workHistory: {
+    list: (projectId: number) => ipcRenderer.invoke('work-history:list', { projectId }),
+  },
 });

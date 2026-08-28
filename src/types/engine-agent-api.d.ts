@@ -46,6 +46,18 @@ interface ChatApi {
   send: (projectId: number, content: string) => Promise<ChatMessage[]>;
 }
 
+export interface WorkHistoryEntry {
+  id: number;
+  projectId: number;
+  toolName: string;
+  summary: string;
+  createdAt: string;
+}
+
+interface WorkHistoryApi {
+  list: (projectId: number) => Promise<WorkHistoryEntry[]>;
+}
+
 declare global {
   interface Window {
     engineAgentApi: {
@@ -53,6 +65,7 @@ declare global {
       auth: AuthApi;
       projects: ProjectsApi;
       chat: ChatApi;
+      workHistory: WorkHistoryApi;
     };
   }
 }
