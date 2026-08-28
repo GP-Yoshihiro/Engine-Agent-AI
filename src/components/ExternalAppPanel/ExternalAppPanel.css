@@ -1,0 +1,43 @@
+.external-app-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px;
+}
+
+.external-app-panel__description {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  margin: 0;
+}
+
+.external-app-panel__path {
+  font-size: 0.75rem;
+  opacity: 0.6;
+  word-break: break-all;
+  margin: 0;
+}
+
+.external-app-panel__process-name {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+}
+
+.external-app-panel__process-name input {
+  padding: 4px 6px;
+}
+
+.external-app-panel__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.external-app-panel__error {
+  color: #d33;
+  font-size: 0.85rem;
+  margin: 0;
+}

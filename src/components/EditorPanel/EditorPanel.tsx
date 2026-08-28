@@ -1,12 +1,13 @@
+import ExternalAppPanel from '../ExternalAppPanel/ExternalAppPanel';
+
 /**
  * Visual Studio / Visual Studio Code のソースコード編集画面を表示するパネル。
- * 実際のIDEウィンドウ追従表示は electron/window-manager 実装後に接続する。
+ * ウィンドウとしては独立させず、選択したIDEアプリのウィンドウ位置を
+ * このパネルの位置・サイズに手動で合わせる（macOSのシステムイベント経由）。
  */
 function EditorPanel() {
   return (
-    <div>
-      <p>Visual Studio / Visual Studio Code の画面がここに表示されます。</p>
-    </div>
+    <ExternalAppPanel description="Visual Studio / Visual Studio Code を選択して起動すると、このパネルの位置にウィンドウを合わせられます。" />
   );
 }
 

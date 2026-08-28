@@ -28,4 +28,12 @@ contextBridge.exposeInMainWorld('engineAgentApi', {
   workHistory: {
     list: (projectId: number) => ipcRenderer.invoke('work-history:list', { projectId }),
   },
+  windowManager: {
+    selectApp: () => ipcRenderer.invoke('dialog:selectApp'),
+    launch: (appPath: string) => ipcRenderer.invoke('window-manager:launch', { appPath }),
+    syncPosition: (
+      processName: string,
+      rect: { x: number; y: number; width: number; height: number },
+    ) => ipcRenderer.invoke('window-manager:sync', { processName, rect }),
+  },
 });

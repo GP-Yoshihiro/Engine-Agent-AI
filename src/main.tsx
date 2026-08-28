@@ -9,7 +9,8 @@ if (
   !window.engineAgentApi?.auth ||
   !window.engineAgentApi?.projects ||
   !window.engineAgentApi?.chat ||
-  !window.engineAgentApi?.workHistory
+  !window.engineAgentApi?.workHistory ||
+  !window.engineAgentApi?.windowManager
 ) {
   ReactDOM.createRoot(rootElement).render(
     <div style={{ padding: 32 }}>

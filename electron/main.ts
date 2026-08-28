@@ -8,6 +8,7 @@ import { ProjectError, ProjectService } from './projects/ProjectService';
 import { ChatError, ChatService } from './chat/ChatService';
 import { AgentError, AgentService } from './agent/AgentService';
 import { WorkHistoryService } from './work-history/WorkHistoryService';
+import { WindowManagerError, WindowManagerService, type WindowRect } from './window-manager/WindowManagerService';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -47,12 +48,22 @@ interface WorkHistoryListArgs {
   projectId: number;
 }
 
+interface LaunchAppArgs {
+  appPath: string;
+}
+
+interface SyncWindowPositionArgs {
+  processName: string;
+  rect: WindowRect;
+}
+
 function toDomainErrorMessage(error: unknown, fallbackMessage: string): Error {
   if (
     error instanceof AuthError ||
     error instanceof ProjectError ||
     error instanceof ChatError ||
-    error instanceof AgentError
+    error instanceof AgentError ||
+    error instanceof WindowManagerError
   ) {
     return new Error(error.message);
   }
@@ -177,6 +188,44 @@ function registerChatHandlers(
   });
 }
 
+function registerWindowManagerHandlers(
+  windowManagerService: WindowManagerService,
+  sessionStore: SessionStore,
+): void {
+  ipcMain.handle('dialog:selectApp', async () => {
+    if (!mainWindow) {
+      return null;
+    }
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openFile'],
+      filters: [{ name: 'アプリケーション', extensions: ['app'] }],
+    });
+    if (result.canceled || result.filePaths.length === 0) {
+      return null;
+    }
+    return result.filePaths[0];
+  });
+
+  ipcMain.handle('window-manager:launch', async (_event, args: LaunchAppArgs) => {
+    sessionStore.requireCurrentUser();
+    try {
+      await windowManagerService.launchApp(args.appPath);
+      return { processName: windowManagerService.guessProcessName(args.appPath) };
+    } catch (error) {
+      throw toDomainErrorMessage(error, 'アプリの起動に失敗しました。');
+    }
+  });
+
+  ipcMain.handle('window-manager:sync', async (_event, args: SyncWindowPositionArgs) => {
+    sessionStore.requireCurrentUser();
+    try {
+      await windowManagerService.syncWindowPosition(args.processName, args.rect);
+    } catch (error) {
+      throw toDomainErrorMessage(error, 'ウィンドウの位置合わせに失敗しました。');
+    }
+  });
+}
+
 function registerWorkHistoryHandlers(
   workHistoryService: WorkHistoryService,
   sessionStore: SessionStore,
@@ -218,11 +267,13 @@ app.whenReady().then(() => {
   const chatService = new ChatService(database, projectService);
   const agentService = new AgentService();
   const workHistoryService = new WorkHistoryService(database, projectService);
+  const windowManagerService = new WindowManagerService();
 
   registerAuthHandlers(authService, sessionStore);
   registerProjectHandlers(projectService, sessionStore);
   registerChatHandlers(chatService, projectService, agentService, workHistoryService, sessionStore);
   registerWorkHistoryHandlers(workHistoryService, sessionStore);
+  registerWindowManagerHandlers(windowManagerService, sessionStore);
 
   createMainWindow();
 

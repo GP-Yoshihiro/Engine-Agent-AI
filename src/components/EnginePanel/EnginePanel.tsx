@@ -1,12 +1,13 @@
+import ExternalAppPanel from '../ExternalAppPanel/ExternalAppPanel';
+
 /**
  * UE / Unity エンジン画面を表示するパネル。
- * 実際のエンジンウィンドウ追従表示は electron/window-manager 実装後に接続する。
+ * ウィンドウとしては独立させず、選択したエンジンアプリのウィンドウ位置を
+ * このパネルの位置・サイズに手動で合わせる（macOSのシステムイベント経由）。
  */
 function EnginePanel() {
   return (
-    <div>
-      <p>UE / Unity のエディタウィンドウがここに表示されます。</p>
-    </div>
+    <ExternalAppPanel description="UE / Unity のエディタアプリを選択して起動すると、このパネルの位置にウィンドウを合わせられます。" />
   );
 }
 

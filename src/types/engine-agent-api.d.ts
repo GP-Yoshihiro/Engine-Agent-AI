@@ -58,6 +58,19 @@ interface WorkHistoryApi {
   list: (projectId: number) => Promise<WorkHistoryEntry[]>;
 }
 
+export interface WindowRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface WindowManagerApi {
+  selectApp: () => Promise<string | null>;
+  launch: (appPath: string) => Promise<{ processName: string }>;
+  syncPosition: (processName: string, rect: WindowRect) => Promise<void>;
+}
+
 declare global {
   interface Window {
     engineAgentApi: {
@@ -66,6 +79,7 @@ declare global {
       projects: ProjectsApi;
       chat: ChatApi;
       workHistory: WorkHistoryApi;
+      windowManager: WindowManagerApi;
     };
   }
 }
