@@ -1,12 +1,16 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import 'dotenv/config';
+import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import path from 'node:path';
 import { AppDatabase } from './db/Database';
 import { AuthError, AuthService } from './auth/AuthService';
 import { SessionStore } from './auth/SessionStore';
 import { ProjectError, ProjectService } from './projects/ProjectService';
 import { ChatError, ChatService } from './chat/ChatService';
+import { AgentError, AgentService } from './agent/AgentService';
 
 const isDev = process.env.NODE_ENV === 'development';
+
+let mainWindow: BrowserWindow | null = null;
 
 interface RegisterArgs {
   email: string;
@@ -22,6 +26,7 @@ interface LoginArgs {
 interface CreateProjectArgs {
   name: string;
   engineType: string;
+  projectPath: string;
 }
 
 interface DeleteProjectArgs {
@@ -38,7 +43,12 @@ interface ChatSendArgs {
 }
 
 function toDomainErrorMessage(error: unknown, fallbackMessage: string): Error {
-  if (error instanceof AuthError || error instanceof ProjectError || error instanceof ChatError) {
+  if (
+    error instanceof AuthError ||
+    error instanceof ProjectError ||
+    error instanceof ChatError ||
+    error instanceof AgentError
+  ) {
     return new Error(error.message);
   }
   return new Error(fallbackMessage);
@@ -79,7 +89,7 @@ function registerProjectHandlers(projectService: ProjectService, sessionStore: S
   ipcMain.handle('project:create', (_event, args: CreateProjectArgs) => {
     const user = sessionStore.requireCurrentUser();
     try {
-      return projectService.create(user.id, args.name, args.engineType);
+      return projectService.create(user.id, args.name, args.engineType, args.projectPath);
     } catch (error) {
       throw toDomainErrorMessage(error, 'プロジェクト作成中にエラーが発生しました。');
     }
@@ -93,9 +103,25 @@ function registerProjectHandlers(projectService: ProjectService, sessionStore: S
       throw toDomainErrorMessage(error, 'プロジェクト削除中にエラーが発生しました。');
     }
   });
+
+  ipcMain.handle('dialog:selectFolder', async () => {
+    if (!mainWindow) {
+      return null;
+    }
+    const result = await dialog.showOpenDialog(mainWindow, { properties: ['openDirectory'] });
+    if (result.canceled || result.filePaths.length === 0) {
+      return null;
+    }
+    return result.filePaths[0];
+  });
 }
 
-function registerChatHandlers(chatService: ChatService, sessionStore: SessionStore): void {
+function registerChatHandlers(
+  chatService: ChatService,
+  projectService: ProjectService,
+  agentService: AgentService,
+  sessionStore: SessionStore,
+): void {
   ipcMain.handle('chat:list', (_event, args: ChatListArgs) => {
     const user = sessionStore.requireCurrentUser();
     try {
@@ -105,10 +131,37 @@ function registerChatHandlers(chatService: ChatService, sessionStore: SessionSto
     }
   });
 
-  ipcMain.handle('chat:send', (_event, args: ChatSendArgs) => {
+  ipcMain.handle('chat:send', async (_event, args: ChatSendArgs) => {
     const user = sessionStore.requireCurrentUser();
     try {
-      return chatService.sendMessage(user.id, args.projectId, args.content);
+      const project = projectService.get(user.id, args.projectId);
+      const userMessage = chatService.saveUserMessage(user.id, args.projectId, args.content);
+
+      if (!project.projectPath) {
+        const agentMessage = chatService.saveAgentMessage(
+          args.projectId,
+          'このプロジェクトにはフォルダが設定されていないため、AIエージェントを実行できません。',
+        );
+        return [userMessage, agentMessage];
+      }
+
+      try {
+        const { responseText } = await agentService.run({
+          prompt: args.content,
+          projectPath: project.projectPath,
+          projectName: project.name,
+          engineType: project.engineType,
+        });
+        const agentMessage = chatService.saveAgentMessage(args.projectId, responseText);
+        return [userMessage, agentMessage];
+      } catch (agentRunError) {
+        const message =
+          agentRunError instanceof AgentError
+            ? agentRunError.message
+            : 'AIエージェントの実行中にエラーが発生しました。';
+        const agentMessage = chatService.saveAgentMessage(args.projectId, message);
+        return [userMessage, agentMessage];
+      }
     } catch (error) {
       throw toDomainErrorMessage(error, 'メッセージ送信中にエラーが発生しました。');
     }
@@ -116,7 +169,7 @@ function registerChatHandlers(chatService: ChatService, sessionStore: SessionSto
 }
 
 function createMainWindow(): void {
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1440,
     height: 900,
     webPreferences: {
@@ -140,10 +193,11 @@ app.whenReady().then(() => {
   const authService = new AuthService(database);
   const projectService = new ProjectService(database);
   const chatService = new ChatService(database, projectService);
+  const agentService = new AgentService();
 
   registerAuthHandlers(authService, sessionStore);
   registerProjectHandlers(projectService, sessionStore);
-  registerChatHandlers(chatService, sessionStore);
+  registerChatHandlers(chatService, projectService, agentService, sessionStore);
 
   createMainWindow();
 

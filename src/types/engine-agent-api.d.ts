@@ -13,6 +13,7 @@ export interface Project {
   userId: number;
   name: string;
   engineType: EngineType;
+  projectPath: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -25,8 +26,9 @@ interface AuthApi {
 
 interface ProjectsApi {
   list: () => Promise<Project[]>;
-  create: (name: string, engineType: EngineType) => Promise<Project>;
+  create: (name: string, engineType: EngineType, projectPath: string) => Promise<Project>;
   remove: (projectId: number) => Promise<void>;
+  selectFolder: () => Promise<string | null>;
 }
 
 export type ChatRole = 'user' | 'agent';

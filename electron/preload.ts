@@ -2,8 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 /**
  * Renderer（React側）へ公開するAPIのブリッジ。
- * AIエージェント/ウィンドウ管理の機能実装時に、
- * ここへ安全なIPC呼び出しを追加していく。
+ * ウィンドウ管理の機能実装時に、ここへ安全なIPC呼び出しを追加していく。
  */
 contextBridge.exposeInMainWorld('engineAgentApi', {
   appVersion: process.env.npm_package_version ?? 'dev',
@@ -16,9 +15,10 @@ contextBridge.exposeInMainWorld('engineAgentApi', {
   },
   projects: {
     list: () => ipcRenderer.invoke('project:list'),
-    create: (name: string, engineType: string) =>
-      ipcRenderer.invoke('project:create', { name, engineType }),
+    create: (name: string, engineType: string, projectPath: string) =>
+      ipcRenderer.invoke('project:create', { name, engineType, projectPath }),
     remove: (projectId: number) => ipcRenderer.invoke('project:delete', { projectId }),
+    selectFolder: () => ipcRenderer.invoke('dialog:selectFolder'),
   },
   chat: {
     list: (projectId: number) => ipcRenderer.invoke('chat:list', { projectId }),

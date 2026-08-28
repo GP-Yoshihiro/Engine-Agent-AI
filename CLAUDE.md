@@ -27,8 +27,11 @@ UE（Unreal Engine）、Unity、Visual Studio / Visual Studio Codeなどの開�
 - **アプリ基盤**: Electron（デスクトップアプリとして構築）
 - **フロントエンド**: React + TypeScript + Vite
 - **バックエンド/メインプロセス**: Node.js + TypeScript（Electron Main Process内に実装）
-- **データベース**: SQLite（ローカル永続化。アカウント管理・プロジェクトデータ・会話履歴を格納）
-- **AIエージェント**: Claude Agent SDK / Claude Code CLI をNode.js側からサブプロセス/SDK経由で呼び出す
+- **データベース**: `node:sqlite`（Node.js組み込み。ネイティブビルド依存を避けるためbetter-sqlite3等は使用しない）
+- **AIエージェント**: ローカルの `claude` CLI をNode.js側からサブプロセスとして呼び出す
+  （Claude Pro/Maxのログインセッションを利用し、Anthropic APIの従量課金を発生させないため。
+  headlessモードには操作ごとの承認コールバックが無いため、許可するツールは
+  読み取り・ファイル編集までとし、Bashコマンド実行は許可しない）
 
 ### エンジン/IDE画面統合の方針
 

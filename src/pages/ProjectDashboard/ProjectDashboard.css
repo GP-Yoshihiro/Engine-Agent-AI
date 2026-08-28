@@ -78,3 +78,9 @@
   font-size: 0.85rem;
   opacity: 0.8;
 }
+
+.project-list__path {
+  font-size: 0.75rem;
+  opacity: 0.6;
+  word-break: break-all;
+}

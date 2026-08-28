@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import type { AppDatabase } from '../db/Database';
 
 export const ENGINE_TYPES = ['unreal-engine', 'unity'] as const;
@@ -12,6 +13,7 @@ export interface Project {
   userId: number;
   name: string;
   engineType: EngineType;
+  projectPath: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -21,6 +23,7 @@ interface ProjectRow {
   user_id: number;
   name: string;
   engine_type: string;
+  project_path: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -31,6 +34,7 @@ function toProject(row: ProjectRow): Project {
     userId: row.user_id,
     name: row.name,
     engineType: row.engine_type as EngineType,
+    projectPath: row.project_path,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -62,13 +66,20 @@ export class ProjectService {
     return rows.map(toProject);
   }
 
-  create(userId: number, name: string, engineType: string): Project {
+  create(userId: number, name: string, engineType: string, projectPath: string): Project {
     const trimmedName = name.trim();
     if (!trimmedName) {
       throw new ProjectError('プロジェクト名を入力してください。');
     }
     if (!isEngineType(engineType)) {
       throw new ProjectError('使用するエンジンを選択してください。');
+    }
+    const trimmedPath = projectPath.trim();
+    if (!trimmedPath) {
+      throw new ProjectError('プロジェクトフォルダを選択してください。');
+    }
+    if (!fs.existsSync(trimmedPath)) {
+      throw new ProjectError('指定されたフォルダが見つかりません。');
     }
 
     const { count } = this.db.raw
@@ -81,8 +92,8 @@ export class ProjectService {
     }
 
     const result = this.db.raw
-      .prepare('INSERT INTO projects (user_id, name, engine_type) VALUES (?, ?, ?)')
-      .run(userId, trimmedName, engineType);
+      .prepare('INSERT INTO projects (user_id, name, engine_type, project_path) VALUES (?, ?, ?, ?)')
+      .run(userId, trimmedName, engineType, trimmedPath);
 
     const created = this.db.raw
       .prepare('SELECT * FROM projects WHERE id = ?')

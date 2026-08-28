@@ -31,13 +31,7 @@ function toChatMessage(row: ChatMessageRow): ChatMessage {
   };
 }
 
-const PENDING_AGENT_REPLY = 'AIエージェントとの連携は現在準備中です。もうしばらくお待ちください。';
-
-/**
- * プロジェクトごとのチャットメッセージ送受信・履歴保存を担うサービス。
- * AIエージェント（Claude Agent SDK）との連携が実装されるまでは、
- * ユーザーのメッセージを保存した上で固定の案内メッセージを返す。
- */
+/** プロジェクトごとのチャットメッセージの永続化を担うサービス。実際のAIエージェント呼び出しはMain側で行う。 */
 export class ChatService {
   constructor(
     private readonly db: AppDatabase,
@@ -53,7 +47,8 @@ export class ChatService {
     return rows.map(toChatMessage);
   }
 
-  sendMessage(userId: number, projectId: number, content: string): ChatMessage[] {
+  /** ユーザーのメッセージを保存する。所有権のないプロジェクトIDが渡された場合は例外を投げる。 */
+  saveUserMessage(userId: number, projectId: number, content: string): ChatMessage {
     this.projectService.get(userId, projectId);
 
     const trimmedContent = content.trim();
@@ -61,10 +56,12 @@ export class ChatService {
       throw new ChatError('メッセージを入力してください。');
     }
 
-    const userMessage = this.insert(projectId, 'user', trimmedContent);
-    const agentMessage = this.insert(projectId, 'agent', PENDING_AGENT_REPLY);
+    return this.insert(projectId, 'user', trimmedContent);
+  }
 
-    return [userMessage, agentMessage];
+  /** AIエージェントの返答を保存する。呼び出し元で既にプロジェクトの所有権を確認済みであることを前提とする。 */
+  saveAgentMessage(projectId: number, content: string): ChatMessage {
+    return this.insert(projectId, 'agent', content);
   }
 
   private insert(projectId: number, role: ChatRole, content: string): ChatMessage {
